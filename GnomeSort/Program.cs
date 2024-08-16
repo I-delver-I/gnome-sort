@@ -1,37 +1,69 @@
 ﻿using System.Diagnostics;
-using GnomeSort.Calculators;
+using GnomeSort.Input;
+using GnomeSort.Sorters;
 
 namespace GnomeSort;
 
+/// <summary>
+/// Main program class for Gnome Sort application.
+/// </summary>
 public static class Program
 {
-    private const int ArraySize = 225000;
-    private static readonly int ProcessorCount = Environment.ProcessorCount;
-    
+    /// <summary>
+    /// Main entry point of the application.
+    /// </summary>
     public static void Main()
     {
-        var randomArray = ArrayGenerator.GenerateRandomIntArray(ArraySize);
         var stopwatch = new Stopwatch();
-        var sequentialCalculator = new SequentialGnomeSortCalculator();
-        var parallelCalculator = new ParallelGnomeSortCalculator();
-
-        Console.WriteLine("Array size: " + ArraySize);
-        Console.WriteLine("Processor count: " + ProcessorCount);
+        var inputCatcher = new InputCatcher();
+        var sequentialSorter = new SequentialGnomeSorter();
+        var parallelSorter = new ParallelGnomeSorter();
         
+        var arrayLength = inputCatcher.CatchArrayLength();
+        var numberOfThreads = inputCatcher.CatchNumberOfThreads();
+        
+        var randomArray = ArrayGenerator.GenerateRandomArray(arrayLength);
+        Console.WriteLine("Sorting array...\n");
+        
+        var sequentiallySortedArray = Array.Empty<int>();
         stopwatch.Start();
-        var sequentiallySortedArray = sequentialCalculator.Sort(randomArray);
-        stopwatch.Stop();
-        Console.WriteLine($"Sequential Gnome Sort took {stopwatch.ElapsedMilliseconds} ms \n");
-        
+
+        try
+        {
+            sequentiallySortedArray = sequentialSorter.Sort(randomArray);
+            Console.WriteLine($"Sequential Gnome Sort took {stopwatch.ElapsedMilliseconds} ms");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Sequential Gnome Sort failed:\n{ex.Message}");
+        }
+        finally
+        {
+            stopwatch.Stop();
+        }
+
         stopwatch.Reset();
-        
+        var parallelSortedArray = Array.Empty<int>();
         stopwatch.Start();
-        var gnomeSortedArray = parallelCalculator.Sort(randomArray, segmentsCount: ProcessorCount);
-        stopwatch.Stop();
-        Console.WriteLine($"Parallel Gnome Sort took {stopwatch.ElapsedMilliseconds} ms");
 
-        Console.WriteLine(CompareArrays(sequentiallySortedArray, gnomeSortedArray) 
-            ? "\nArrays are equal" : "\nArrays are not equal");
+        try
+        {
+            parallelSortedArray = parallelSorter.Sort(randomArray, numberOfThreads);
+            Console.WriteLine($"Parallel Gnome Sort took {stopwatch.ElapsedMilliseconds} ms");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Parallel Gnome Sort failed:\n{ex.Message}");
+        }
+        finally
+        {
+            stopwatch.Stop();
+        }
+        
+        Console.WriteLine();
+        Console.Write(AreArraysEqual(sequentiallySortedArray, parallelSortedArray) 
+            ? "The sorted arrays are equal." 
+            : "The sorted arrays are not equal.");
     }
     
     private static void PrintArray(int[] array)
@@ -44,7 +76,7 @@ public static class Program
         Console.WriteLine();
     }
     
-    private static bool CompareArrays(int[] array1, int[] array2)
+    private static bool AreArraysEqual(int[] array1, int[] array2)
     {
         if (array1.Length != array2.Length)
         {
