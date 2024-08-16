@@ -12,22 +12,24 @@
         /// <summary>
         /// Generates an array of random integers with the specified size.
         /// </summary>
-        /// <param name="size">The size of the array to generate.</param>
+        /// <param name="length">The size of the array to generate.</param>
         /// <returns>An array of random integers.</returns>
         /// <exception cref="ArgumentOutOfRangeException">Thrown when the size is less than or equal to zero.</exception>
-        public static int[] GenerateRandomIntArray(int size)
+        public static int[] GenerateRandomArray(int length)
         {
-            if (size <= 0) {
-                throw new ArgumentOutOfRangeException(nameof(size), "Size must be greater than zero.");
+            if (length <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(length), "Size must be greater than zero.");
             }
             
-            var array = new int[size];
+            var randomArray = new int[length];
 
-            for (var i = 0; i < size; i++) {
-                array[i] = Random.Next(MinRandomValue, MaxRandomValue);
+            for (var i = 0; i < length; i++) 
+            {
+                randomArray[i] = Random.Next(MinRandomValue, MaxRandomValue);
             }
 
-            return array;
+            return randomArray;
         }
     }
 }
