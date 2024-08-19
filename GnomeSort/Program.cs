@@ -61,9 +61,19 @@ public static class Program
         }
         
         Console.WriteLine();
-        Console.Write(AreArraysEqual(sequentiallySortedArray, parallelSortedArray) 
+        Console.WriteLine(AreArraysEqual(sequentiallySortedArray, parallelSortedArray) 
             ? "The sorted arrays are equal." 
             : "The sorted arrays are not equal.");
+    }
+    
+    private static void PrintArrays(int[] randomArray, int[] sequentiallySortedArray, int[] parallelSortedArray)
+    {
+        Console.WriteLine("Random array:");
+        PrintArray(randomArray);
+        Console.WriteLine("Sequentially sorted array:");
+        PrintArray(sequentiallySortedArray);
+        Console.WriteLine("Parallel sorted array:");
+        PrintArray(parallelSortedArray);
     }
     
     private static void PrintArray(int[] array)
