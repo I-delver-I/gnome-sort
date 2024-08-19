@@ -27,26 +27,21 @@ public class ParallelGnomeSorter
         }
         
         var segmentLength = inputArray.Length / numberOfThreads;
-        var sortingTasks = new Task[numberOfThreads];
         var sortedArray = (int[])inputArray.Clone();
         var sequentialSorter = new SequentialGnomeSorter();
 
-        for (var i = 0; i < numberOfThreads; i++)
+        Parallel.For(0, numberOfThreads, i =>
         {
             var segmentStartIndex = i * segmentLength;
-            var segmentEndIndex = i == numberOfThreads - 1 
-                ? sortedArray.Length : segmentStartIndex + segmentLength;
-            var localArray = sortedArray;
+            var segmentEndIndex = i == numberOfThreads - 1
+                ? inputArray.Length
+                : segmentStartIndex + segmentLength;
 
-            sortingTasks[i] = Task.Run(() =>
-            {
-                var sortedSegment = sequentialSorter.Sort(localArray, segmentStartIndex, segmentEndIndex);
-                Array.Copy(sortedSegment, segmentStartIndex, 
-                    localArray, segmentStartIndex, segmentEndIndex - segmentStartIndex);
-            });
-        }
+            var sortedSegment = sequentialSorter.Sort(sortedArray, segmentStartIndex, segmentEndIndex);
+            Array.Copy(sortedSegment, segmentStartIndex, sortedArray, 
+                segmentStartIndex, segmentEndIndex - segmentStartIndex);
+        });
 
-        Task.WaitAll(sortingTasks);
         sortedArray = MergeSegments(sortedArray, numberOfThreads, segmentLength);
         return sortedArray;
     }
