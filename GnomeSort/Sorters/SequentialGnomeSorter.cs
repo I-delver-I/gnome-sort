@@ -1,77 +1,55 @@
 ﻿namespace GnomeSort.Sorters;
 
 /// <summary>
-/// Provides a method to perform Gnome Sort on an array of integers.
+/// Provides a method to perform Gnome Sort on an array.
 /// </summary>
-public class SequentialGnomeSorter
+public class SequentialGnomeSorter<T> where T : IComparable<T>
 {
     /// <summary>
-    /// Sorts a segment of the specified array using the Gnome Sort algorithm.
+    /// Sorts the specified array using the Gnome Sort algorithm.
     /// </summary>
-    /// <param name="array">The array of integers to sort.</param>
-    /// <param name="segmentStart">The starting index of the segment to sort.</param>
-    /// <param name="segmentEnd">The ending index of the segment to sort.</param>
-    /// <returns>A new array containing the sorted segment.</returns>
+    /// <param name="array">The array to sort.</param>
+    /// <returns>Sorted array.</returns>
     /// <exception cref="ArgumentNullException">Thrown when the input array is null.</exception>
-    /// <exception cref="ArgumentOutOfRangeException">Thrown when the start or end index is out of range.</exception>
-    /// <exception cref="ArgumentException">Thrown when the start index is not less than the end index.</exception>
-    public int[] Sort(int[] array, int segmentStart, int segmentEnd)
+    /// <exception cref="ArgumentOutOfRangeException">Thrown when the array length is zero.</exception>
+    public T[] Sort(T[] array)
     {
-        ValidateParameters(array, segmentStart, segmentEnd);
-        var currentIndex = segmentStart;
-        var sortedSegment = (int[])array.Clone();
+        ValidateParameters(array);
+        var currentIndex = 1;
+        var sortedSegment = (T[])array.Clone();
 
-        while (currentIndex < segmentEnd)
+        while (currentIndex < sortedSegment.Length)
         {
-            if (currentIndex == segmentStart || sortedSegment[currentIndex] >= sortedSegment[currentIndex - 1])
+            if (currentIndex == 0 
+                || sortedSegment[currentIndex].CompareTo(sortedSegment[currentIndex - 1]) >= 0)
             {
                 currentIndex++;
             }
             else
             {
-                (sortedSegment[currentIndex], sortedSegment[currentIndex - 1]) 
-                    = (sortedSegment[currentIndex - 1], sortedSegment[currentIndex]);
+                Swap(sortedSegment, currentIndex, currentIndex - 1);
                 currentIndex--;
             }
         }
 
         return sortedSegment;
     }
-
-    /// <summary>
-    /// Sorts the specified array using the Gnome Sort algorithm.
-    /// </summary>
-    /// <param name="array">The array of integers to sort.</param>
-    /// <returns>A new array containing the sorted integers.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when the input array is null.</exception>
-    /// <exception cref="ArgumentOutOfRangeException">Thrown when the start or end index is out of range.</exception>
-    /// <exception cref="ArgumentException">Thrown when the start index is not less than the end index.</exception>
-    public int[] Sort(int[] array)
+    
+    private void Swap(T[] array, int index1, int index2)
     {
-        return Sort(array, 0, array.Length);
+        (array[index1], array[index2]) = (array[index2], array[index1]);
     }
     
-    private void ValidateParameters(int[] array, int segmentStart, int segmentEnd)
+    private void ValidateParameters(T[] array)
     {
         if (array == null)
         {
             throw new ArgumentNullException(nameof(array), "Input array cannot be null.");
         }
-
-        if (segmentStart < 0)
+        
+        if (array.Length == 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(segmentStart), "Start index cannot be negative.");
-        }
-
-        if (segmentEnd > array.Length)
-        {
-            throw new ArgumentOutOfRangeException(nameof(segmentEnd), 
-                "End index cannot be greater than the array length.");
-        }
-
-        if (segmentStart >= segmentEnd)
-        {
-            throw new ArgumentException("Start index must be less than end index.", nameof(segmentStart));
+            throw new ArgumentOutOfRangeException(nameof(array), "Input array cannot be empty.");
         }
     }
 }

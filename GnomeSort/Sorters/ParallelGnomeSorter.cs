@@ -1,95 +1,105 @@
-﻿namespace GnomeSort.Sorters;
-
-/// <summary>
-/// Provides a method to perform parallel Gnome Sort on an array of integers.
-/// </summary>
-public class ParallelGnomeSorter
+﻿namespace GnomeSort.Sorters
 {
-    /// <summary>
-    /// Sorts the specified array using the parallel Gnome Sort algorithm.
-    /// </summary>
-    /// <param name="inputArray">The array of integers to sort.</param>
-    /// <param name="numberOfThreads">The number of threads to use for sorting.</param>
-    /// <returns>A new array containing the sorted integers.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when the input array is null.</exception>
-    /// <exception cref="ArgumentOutOfRangeException">Thrown when the number of threads is less than or equal to zero.</exception>
-    public int[] Sort(int[] inputArray, int numberOfThreads)
+    class ParallelGnomeSorter<T> where T : IComparable<T>
     {
-        if (numberOfThreads <= 0)
+        private object[] _locks;
+
+        public T[] Sort(T[] array, int numberOfThreads)
         {
-            throw new ArgumentOutOfRangeException(nameof(numberOfThreads),
-                "Number of threads must be greater than zero.");
+            ValidateParameters(array, ref numberOfThreads);
+            GenerateLocks(array.Length);
+            var sortedArray = (T[])array.Clone();
+            var step = 2 * numberOfThreads;
+
+            Parallel.For(0, numberOfThreads, threadIndex =>
+            {
+                var currentIndex = threadIndex * 2 + 1;
+
+                while (currentIndex < sortedArray.Length)
+                {
+                    while (currentIndex > 0 
+                           && sortedArray[currentIndex - 1].CompareTo(sortedArray[currentIndex]) > 0)
+                    {
+                        SwapWithLock(sortedArray, currentIndex, currentIndex - 1);
+                        currentIndex--;
+                    }
+                    
+                    currentIndex += step;
+                }
+            });
+            
+            // FinalPass(sortedArray);
+            return sortedArray;
         }
 
-        if (inputArray.Length < numberOfThreads)
+        private void GenerateLocks(int arrayLength)
         {
-            numberOfThreads = inputArray.Length;
+            _locks = new object[arrayLength];
+            for (var i = 0; i < arrayLength; i++)
+            {
+                _locks[i] = new object();
+            }
         }
         
-        var segmentLength = inputArray.Length / numberOfThreads;
-        var sortedArray = (int[])inputArray.Clone();
-        var sequentialSorter = new SequentialGnomeSorter();
-
-        Parallel.For(0, numberOfThreads, i =>
+        /// <summary>
+        /// Performs a final pass to ensure the array is fully sorted.
+        /// </summary>
+        /// <param name="array">The array to be sorted.</param>
+        private void FinalPass(T[] array)
         {
-            var segmentStartIndex = i * segmentLength;
-            var segmentEndIndex = i == numberOfThreads - 1
-                ? inputArray.Length
-                : segmentStartIndex + segmentLength;
-
-            var sortedSegment = sequentialSorter.Sort(sortedArray, segmentStartIndex, segmentEndIndex);
-            Array.Copy(sortedSegment, segmentStartIndex, sortedArray, 
-                segmentStartIndex, segmentEndIndex - segmentStartIndex);
-        });
-
-        sortedArray = MergeSegments(sortedArray, numberOfThreads, segmentLength);
-        return sortedArray;
-    }
-
-    /// <summary>
-    /// Merges the sorted segments of the array.
-    /// </summary>
-    /// <param name="array">The array containing sorted segments.</param>
-    /// <param name="segmentCount">The number of segments.</param>
-    /// <param name="segmentSize">The size of each segment.</param>
-    /// <returns>A new array containing the merged sorted segments.</returns>
-    private int[] MergeSegments(int[] array, int segmentCount, int segmentSize)
-    {
-        var mergedArray = (int[])array.Clone();
-    
-        for (var segmentIndex = 1; segmentIndex < segmentCount; segmentIndex++)
-        {
-            var currentSegmentStart = segmentIndex * segmentSize;
-            var currentSegmentEnd = segmentIndex == segmentCount - 1 
-                ? array.Length : currentSegmentStart + segmentSize;
-            
-            var tempMergedSegment = new int[currentSegmentEnd];
-            var mergedSegmentIndex = 0;
-            var previousSegmentIndex = 0;
-            var currentSegmentPointer = currentSegmentStart;
-    
-            while (previousSegmentIndex < currentSegmentStart 
-                   && currentSegmentPointer < currentSegmentEnd)
+            for (var i = 1; i < array.Length; i++)
             {
-                tempMergedSegment[mergedSegmentIndex++] 
-                    = mergedArray[previousSegmentIndex] <= mergedArray[currentSegmentPointer] 
-                    ? mergedArray[previousSegmentIndex++] : mergedArray[currentSegmentPointer++];
+                var currentIndex = i;
+
+                while (currentIndex > 0 
+                       && array[currentIndex - 1].CompareTo(array[currentIndex]) > 0)
+                {
+                    Swap(array, currentIndex, currentIndex - 1);
+                    currentIndex--;
+                }
             }
-    
-            while (previousSegmentIndex < currentSegmentStart)
-            {
-                tempMergedSegment[mergedSegmentIndex++] = mergedArray[previousSegmentIndex++];
-            }
-    
-            while (currentSegmentPointer < currentSegmentEnd)
-            {
-                tempMergedSegment[mergedSegmentIndex++] = mergedArray[currentSegmentPointer++];
-            }
-    
-            Array.Copy(tempMergedSegment, 0, mergedArray, 
-                0, currentSegmentEnd);
         }
-    
-        return mergedArray;
+        
+        
+        /// <summary>
+        /// Swaps the elements at the specified indices in the array with thread safety.
+        /// </summary>
+        /// <param name="array">The array containing the elements to swap.</param>
+        /// <param name="i">The index of the first element to swap.</param>
+        /// <param name="j">The index of the second element to swap.</param>
+        private void SwapWithLock(T[] array, int i, int j)
+        {
+            lock (_locks[i])
+            {
+                lock (_locks[j])
+                {
+                    Swap(array, i, j);
+                }
+            }
+        }
+        
+        private void ValidateParameters(T[] array, ref int numberOfThreads)
+        {
+            if (array == null)
+            {
+                throw new ArgumentNullException(nameof(array), "Input array cannot be null.");
+            }
+            
+            if (numberOfThreads <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(numberOfThreads), 
+                    "Number of threads must be greater than zero.");
+            }
+            
+            if (array.Length < numberOfThreads)
+            {
+                numberOfThreads = array.Length;
+            }
+        }
+
+        private void Swap(T[] array, int i, int j)
+        {
+            (array[i], array[j]) = (array[j], array[i]);
+        }
     }
 }
