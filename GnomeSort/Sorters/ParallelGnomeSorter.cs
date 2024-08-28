@@ -28,7 +28,7 @@
                 }
             });
             
-            // FinalPass(sortedArray);
+            FinalPass(sortedArray);
             return sortedArray;
         }
 
