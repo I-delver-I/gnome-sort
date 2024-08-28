@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using GnomeSort.Input;
 using GnomeSort.Sorters;
+using GnomeSort.Tests;
 
 namespace GnomeSort;
 
@@ -14,15 +15,30 @@ public static class Program
     /// </summary>
     public static void Main()
     {
+        Run();
+        // SequentialSortTests.RunSort();
+        // ParallelSortTests.RunSort();
+    }
+
+    private static void Run()
+    {
         var stopwatch = new Stopwatch();
         var inputCatcher = new InputCatcher();
-        var sequentialSorter = new SequentialGnomeSorter();
-        var parallelSorter = new ParallelGnomeSorter();
+        var sequentialSorter = new SequentialGnomeSorter<int>();
+        var parallelSorter = new ParallelGnomeSorter<int>();
         
         var arrayLength = inputCatcher.CatchArrayLength();
         var numberOfThreads = inputCatcher.CatchNumberOfThreads();
         
-        var randomArray = ArrayGenerator.GenerateRandomArray(arrayLength);
+        long sequentialArraySortingTime = 0;
+        long parallelArraySortingTime = 0;
+        
+        var random = new Random();
+        const int minRandomValue = 0;
+        const int maxRandomValue = 1000;
+        var randomArray = ArrayUtils.GenerateRandomArray(arrayLength, () => 
+            random.Next(minRandomValue, maxRandomValue));
+        
         Console.WriteLine("Sorting array...\n");
         
         var sequentiallySortedArray = Array.Empty<int>();
@@ -31,7 +47,8 @@ public static class Program
         try
         {
             sequentiallySortedArray = sequentialSorter.Sort(randomArray);
-            Console.WriteLine($"Sequential Gnome Sort took {stopwatch.ElapsedMilliseconds} ms");
+            sequentialArraySortingTime = stopwatch.ElapsedMilliseconds;
+            Console.WriteLine($"Sequential Gnome Sort took {sequentialArraySortingTime} ms");
         }
         catch (Exception ex)
         {
@@ -49,7 +66,8 @@ public static class Program
         try
         {
             parallelSortedArray = parallelSorter.Sort(randomArray, numberOfThreads);
-            Console.WriteLine($"Parallel Gnome Sort took {stopwatch.ElapsedMilliseconds} ms");
+            parallelArraySortingTime = stopwatch.ElapsedMilliseconds;
+            Console.WriteLine($"Parallel Gnome Sort took {parallelArraySortingTime} ms");
         }
         catch (Exception ex)
         {
@@ -59,40 +77,31 @@ public static class Program
         {
             stopwatch.Stop();
         }
-        
-        Console.WriteLine();
-        Console.WriteLine(AreArraysEqual(sequentiallySortedArray, parallelSortedArray) 
-            ? "The sorted arrays are equal." 
-            : "The sorted arrays are not equal.");
-    }
-    
-    private static void PrintArrays(int[] randomArray, int[] sequentiallySortedArray, int[] parallelSortedArray)
-    {
-        Console.WriteLine("Random array:");
-        PrintArray(randomArray);
-        Console.WriteLine("Sequentially sorted array:");
-        PrintArray(sequentiallySortedArray);
-        Console.WriteLine("Parallel sorted array:");
-        PrintArray(parallelSortedArray);
-    }
-    
-    private static void PrintArray(int[] array)
-    {
-        foreach (var element in array)
-        {
-            Console.Write($"{element} ");
-        }
-        
-        Console.WriteLine();
-    }
-    
-    private static bool AreArraysEqual(int[] array1, int[] array2)
-    {
-        if (array1.Length != array2.Length)
-        {
-            return false;
-        }
 
-        return !array1.Where((t, i) => t != array2[i]).Any();
+        var speedUpFactor = (double)sequentialArraySortingTime / parallelArraySortingTime;
+        Console.WriteLine($"Speed-up factor: {speedUpFactor}");
+        Console.WriteLine();
+        
+        Console.WriteLine("Sequential Gnome Sort result is sorted " 
+                          + (ArrayUtils.IsSortedAscending(sequentiallySortedArray) 
+                              ? "correctly." : "incorrectly."));
+        Console.WriteLine("Parallel Gnome Sort result is sorted "
+                          + (ArrayUtils.IsSortedAscending(parallelSortedArray) 
+                              ? "correctly." : "incorrectly."));
+
+        Console.WriteLine();
+        Console.WriteLine(ArrayUtils.AreArraysEqual(sequentiallySortedArray, parallelSortedArray) 
+            ? "Sorted arrays are equal" : "Sorted arrays are not equal");
+    }
+    
+    private static void PrintArrays(int[] initialArray, int[] sequentiallySortedArray, int[] parallelSortedArray)
+    {
+        Console.WriteLine("Initial array:");
+        ArrayUtils.PrintArray(initialArray);
+        
+        Console.WriteLine("Sequentially sorted array:");
+        ArrayUtils.PrintArray(sequentiallySortedArray);
+        Console.WriteLine("Parallel sorted array:");
+        ArrayUtils.PrintArray(parallelSortedArray);
     }
 }
