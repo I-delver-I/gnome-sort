@@ -5,14 +5,8 @@ using GnomeSort.Tests;
 
 namespace GnomeSort;
 
-/// <summary>
-/// Main program class for Gnome Sort application.
-/// </summary>
 public static class Program
 {
-    /// <summary>
-    /// Main entry point of the application.
-    /// </summary>
     public static void Main()
     {
         Run();
@@ -24,7 +18,7 @@ public static class Program
     {
         var stopwatch = new Stopwatch();
         var inputCatcher = new InputCatcher();
-        var sequentialSorter = new SequentialGnomeSorter<int>();
+        var sequentialSorter = new SequentialHybridGnomeMergeSorter<int>();
         var parallelSorter = new ParallelGnomeSorter<int>();
         
         var arrayLength = inputCatcher.CatchArrayLength();
@@ -35,7 +29,7 @@ public static class Program
         
         var random = new Random();
         const int minRandomValue = 0;
-        const int maxRandomValue = 1000;
+        const int maxRandomValue = 30;
         var randomArray = ArrayUtils.GenerateRandomArray(arrayLength, () => 
             random.Next(minRandomValue, maxRandomValue));
         
@@ -92,6 +86,15 @@ public static class Program
         Console.WriteLine();
         Console.WriteLine(ArrayUtils.AreArraysEqual(sequentiallySortedArray, parallelSortedArray) 
             ? "Sorted arrays are equal" : "Sorted arrays are not equal");
+
+        Console.WriteLine("Initial array:");
+        ArrayUtils.PrintArray(randomArray);
+
+        Console.WriteLine("Sequentially sorted array:");
+        ArrayUtils.PrintArray(sequentiallySortedArray);
+        
+        Console.WriteLine("Parallel sorted array:");
+        ArrayUtils.PrintArray(parallelSortedArray);
     }
     
     private static void PrintArrays(int[] initialArray, int[] sequentiallySortedArray, int[] parallelSortedArray)

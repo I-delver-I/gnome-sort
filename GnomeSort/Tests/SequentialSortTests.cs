@@ -10,7 +10,7 @@ public class SequentialSortTests
     {
         var stopwatch = new Stopwatch();
         var inputCatcher = new InputCatcher();
-        var sequentialSorter = new SequentialGnomeSorter<int>();
+        var sequentialSorter = new SequentialHybridGnomeMergeSorter<int>();
         
         var arrayLength = inputCatcher.CatchArrayLength();
 
