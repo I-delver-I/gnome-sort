@@ -87,14 +87,14 @@ public static class Program
         Console.WriteLine(ArrayUtils.AreArraysEqual(sequentiallySortedArray, parallelSortedArray) 
             ? "Sorted arrays are equal" : "Sorted arrays are not equal");
 
-        Console.WriteLine("Initial array:");
-        ArrayUtils.PrintArray(randomArray);
+        // Console.WriteLine("Initial array:");
+        // ArrayUtils.PrintArray(randomArray);
 
-        Console.WriteLine("Sequentially sorted array:");
-        ArrayUtils.PrintArray(sequentiallySortedArray);
+        // Console.WriteLine("Sequentially sorted array:");
+        // ArrayUtils.PrintArray(sequentiallySortedArray);
         
-        Console.WriteLine("Parallel sorted array:");
-        ArrayUtils.PrintArray(parallelSortedArray);
+        // Console.WriteLine("Parallel sorted array:");
+        // ArrayUtils.PrintArray(parallelSortedArray);
     }
     
     private static void PrintArrays(int[] initialArray, int[] sequentiallySortedArray, int[] parallelSortedArray)
